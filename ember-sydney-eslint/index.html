@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Title</title>
+    <meta charset="utf-8">
+    <style>
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+
+      body {
+        font-family: 'Droid Serif';
+      }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+      }
+      li, p {
+        font-size: 24px;
+      }
+      .remark-code {
+        font-size: 24px;
+      }
+
+      .remark-code.hljs {
+        font-size:18px;
+      }
+      .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle
+
+# ESLint in ember-cli projects
+
+---
+
+# Agenda
+
+1. What is ESLint
+2. Removing JSHint
+3. Writing your .eslintrc file
+4. Adding ESLint
+5. Cleanup
+
+---
+
+# What is ESLint
+
+1. Next generation of JavaScript linting
+2. Not just ES2015+
+3. Publishable and extendable config
+4. Granular rules
+5. Plugins
+
+---
+
+# Removing JSHint
+
+Inside your __`ember-cli-build.js`__ file, in the __`EmberApp`__ or __`EmberAddon`__ constructor:
+
+```javascript
+  'ember-cli-qunit': {
+    useLintTree: false,
+  },
+```
+
+---
+
+# .eslintrc
+
+```json
+{
+  "extends": "airbnb/base",
+  "parser": "babel-eslint",
+  "rules": {
+    "no-console": 0,
+    "no-else-return": 0,
+    "func-names": 0
+  }
+};
+
+```
+
+---
+
+# Tests .eslintrc
+
+```json
+{
+  "extends": "../.eslintrc",
+  "parser": "babel-eslint",
+  "env": {
+    "qunit": true
+  },
+  "globals": {
+    "click": true,
+    "visit": true,
+    "currentURL": true,
+    "currentPath": true,
+    "andThen": true,
+    "server": true
+  }
+}
+```
+
+---
+
+# .eslintignore
+
+```
+# node_modules ignored by default
+
+tmp/
+dist/
+vendor/
+bower_components/
+**/modules/**
+```
+
+---
+
+# Installing dependencies
+
+1. __`npm install -D eslint-config-airbnb babel-eslint`__
+2. __`npm install -D ember-cli-eslint`__
+
+---
+
+# Configuration
+
+Add the following to your __`ember-cli-build.js`__ file, in the __`EmberApp`__ or __`EmberAddon`__ constructor:
+
+```javascript
+'eslint': {
+  testGenerator: eslintTestGenerator,
+},
+```
+
+Where __`eslintTestGenerator`__ is a function to generates the fake test file for a given javascript file and its errors.
+
+---
+
+# Configuration Continued
+
+1. __`npm install -D  lodash.filter js-string-escape`__
+
+```javascript
+var path = require('path');
+var filter = require('lodash.filter');
+var jsStringEscape = require('js-string-escape');
+
+function render(errors) {
+  if (!errors) { return ''; }
+  return errors.map(function(error) {
+    return error.line + ':' + error.column + ' ' +
+      ' - ' + error.message + ' (' + error.ruleId + ')';
+  }).join('\n');
+}
+
+// Qunit test generator
+function eslintTestGenerator(relativePath, errors) {
+  /* eslint quotes: 0 */
+  var breakingErrors = filter(errors, {severity: 2});
+  var pass = !breakingErrors || breakingErrors.length === 0;
+  return "import { module, test } from 'qunit';\n" +
+    "module('ESLint - " + path.dirname(relativePath) + "');\n" +
+    "test('" + relativePath + " should pass ESLint', function(assert) {\n" +
+    "  assert.ok(" + pass + ", '" + relativePath + " should pass ESLint." +
+    jsStringEscape("\n" + render(breakingErrors)) + "');\n" +
+   "});\n";
+}
+```
+
+---
+
+# Cleanup
+
+1. Remove references to jshint __`/* jshint ... */`__
+2. Remove __`.jshintrc`__ and __`tests/.jshintrc`__
+
+    </textarea>
+    <script src="https://gnab.github.io/remark/downloads/remark-latest.min.js">
+    </script>
+    <script>
+      var slideshow = remark.create();
+    </script>
+  </body>
+</html>
